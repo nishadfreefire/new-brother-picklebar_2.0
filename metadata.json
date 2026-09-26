@@ -1,0 +1,6 @@
+{
+  "name": "New Brothers Picklebar - Artisanal Homemade Achar & Pickles",
+  "description": "Premium authentic homemade pickles and achar made with 100% pure cold-pressed mustard oil, traditional spices, real-time order tracking, fast checkout, and live database sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

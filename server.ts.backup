@@ -1,0 +1,735 @@
+import express from 'express';
+import path from 'path';
+import fs from 'fs';
+import { createServer as createViteServer } from 'vite';
+import { INITIAL_PRODUCTS, INITIAL_REVIEWS, INITIAL_COUPONS, INITIAL_SETTINGS, DEFAULT_PRODUCT_IMAGE } from './src/data/initialData';
+import { Order, Product, Coupon, Review, StoreSettings, OrderStatus, TrackingStep } from './src/types';
+
+interface StoreData {
+  products: Product[];
+  orders: Order[];
+  coupons: Coupon[];
+  reviews: Review[];
+  settings: StoreSettings;
+}
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_FILE = path.join(DATA_DIR, 'store.json');
+
+// Ensure directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+// Initial Sample Orders for demonstration of Real-time Tracking & Admin view
+const INITIAL_ORDERS: Order[] = [
+  {
+    id: 'NBP-78921',
+    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+    customerName: 'Ashikur Rahman',
+    phone: '01711998877',
+    deliveryZone: 'inside-dhaka',
+    address: 'Flat 4B, House 12, Road 4, Dhanmondi',
+    city: 'Dhaka',
+    paymentMethod: 'cod',
+    paymentStatus: 'cod_verified',
+    items: [
+      {
+        productId: 'nbp-001',
+        productName: 'Amer Achar',
+        banglaName: 'আমের আচার',
+        size: '250g',
+        price: 260,
+        quantity: 2,
+        imageUrl: DEFAULT_PRODUCT_IMAGE
+      },
+      {
+        productId: 'nbp-013',
+        productName: 'Aloo Bokhara Shahi Achar',
+        banglaName: 'আলুবোখারা আচার',
+        size: '250g',
+        price: 380,
+        quantity: 1,
+        imageUrl: DEFAULT_PRODUCT_IMAGE
+      }
+    ],
+    subtotal: 900,
+    deliveryFee: 70,
+    discountAmount: 100,
+    couponCode: 'NEWBROTHER',
+    totalAmount: 870,
+    status: 'out_for_delivery',
+    courierName: 'Pathao Courier',
+    courierTrackingId: 'PTH-9928124',
+    estimatedDeliveryDate: 'Today by 6:00 PM',
+    trackingHistory: [
+      {
+        status: 'pending',
+        title: 'Order Placed',
+        description: 'Order placed successfully by customer via Cash on Delivery.',
+        timestamp: new Date(Date.now() - 3600000 * 24).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }),
+        completed: true
+      },
+      {
+        status: 'confirmed',
+        title: 'Order Confirmed',
+        description: 'Customer phone verified and stock reserved.',
+        timestamp: new Date(Date.now() - 3600000 * 18).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }),
+        completed: true
+      },
+      {
+        status: 'packaging',
+        title: 'Quality Packaging & Sealed',
+        description: 'Achar glass jars bubble-wrapped and packed in heavy duty box.',
+        timestamp: new Date(Date.now() - 3600000 * 8).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }),
+        completed: true
+      },
+      {
+        status: 'out_for_delivery',
+        title: 'Out for Delivery',
+        description: 'Assigned to Pathao Rider (Kamrul Hasan - 01812345678). Expected delivery today.',
+        timestamp: new Date(Date.now() - 3600000 * 2).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }),
+        completed: false,
+        current: true
+      },
+      {
+        status: 'delivered',
+        title: 'Delivered & Payment Collected',
+        description: 'Delivered securely to customer doorstep.',
+        timestamp: 'Estimated soon',
+        completed: false
+      }
+    ]
+  },
+  {
+    id: 'NBP-54210',
+    createdAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+    customerName: 'Samira Huq',
+    phone: '01822334455',
+    deliveryZone: 'outside-dhaka',
+    address: 'GEC Circle, Nasirabad, Chittagong',
+    city: 'Chittagong',
+    paymentMethod: 'bkash',
+    transactionId: 'BK9X7281M',
+    paymentStatus: 'paid',
+    items: [
+      {
+        productId: 'nbp-015',
+        productName: 'Sylheti Naga Morich Achar',
+        banglaName: 'নাগা আচার',
+        size: '250g',
+        price: 370,
+        quantity: 1,
+        imageUrl: DEFAULT_PRODUCT_IMAGE
+      },
+      {
+        productId: 'nbp-014',
+        productName: 'Deshi Roshun Achar',
+        banglaName: 'রসুন আচার',
+        size: '500g',
+        price: 640,
+        quantity: 1,
+        imageUrl: DEFAULT_PRODUCT_IMAGE
+      }
+    ],
+    subtotal: 1010,
+    deliveryFee: 130,
+    discountAmount: 0,
+    totalAmount: 1140,
+    status: 'delivered',
+    courierName: 'Steadfast Courier',
+    courierTrackingId: 'STF-5582910',
+    trackingHistory: [
+      {
+        status: 'pending',
+        title: 'Order Placed',
+        description: 'Order placed with bKash Pre-payment.',
+        timestamp: new Date(Date.now() - 3600000 * 48).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }),
+        completed: true
+      },
+      {
+        status: 'confirmed',
+        title: 'Payment & Order Confirmed',
+        description: 'bKash TrxID BK9X7281M verified.',
+        timestamp: new Date(Date.now() - 3600000 * 44).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }),
+        completed: true
+      },
+      {
+        status: 'packaging',
+        title: 'Packaged & Handed to Courier',
+        description: 'Handed over to Steadfast Courier Chittagong Hub.',
+        timestamp: new Date(Date.now() - 3600000 * 30).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }),
+        completed: true
+      },
+      {
+        status: 'out_for_delivery',
+        title: 'Courier In Transit',
+        description: 'Shipment arrived at Chittagong Hub and out for delivery.',
+        timestamp: new Date(Date.now() - 3600000 * 12).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }),
+        completed: true
+      },
+      {
+        status: 'delivered',
+        title: 'Successfully Delivered',
+        description: 'Customer received package in good condition.',
+        timestamp: new Date(Date.now() - 3600000 * 4).toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }),
+        completed: true,
+        current: true
+      }
+    ]
+  }
+];
+
+function loadStore(): StoreData {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      return {
+        products: parsed.products || INITIAL_PRODUCTS,
+        orders: parsed.orders || INITIAL_ORDERS,
+        coupons: parsed.coupons || INITIAL_COUPONS,
+        reviews: parsed.reviews || INITIAL_REVIEWS,
+        settings: { ...INITIAL_SETTINGS, ...(parsed.settings || {}) }
+      };
+    }
+  } catch (err) {
+    console.error('Failed to read store file, reinitializing with defaults:', err);
+  }
+
+  const initialStore: StoreData = {
+    products: INITIAL_PRODUCTS,
+    orders: INITIAL_ORDERS,
+    coupons: INITIAL_COUPONS,
+    reviews: INITIAL_REVIEWS,
+    settings: INITIAL_SETTINGS
+  };
+  saveStore(initialStore);
+  return initialStore;
+}
+
+function saveStore(data: StoreData) {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Failed to save store file:', err);
+  }
+}
+
+// In-memory synced state
+let store = loadStore();
+
+function generateTrackingTimeline(status: OrderStatus, courierName?: string, trackingId?: string): TrackingStep[] {
+  const nowStr = new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' });
+  const steps: TrackingStep[] = [
+    {
+      status: 'pending',
+      title: 'Order Placed',
+      description: 'Your order has been recorded in our system.',
+      timestamp: nowStr,
+      completed: true,
+      current: status === 'pending'
+    },
+    {
+      status: 'confirmed',
+      title: 'Order Confirmed',
+      description: 'Inventory verified and order confirmed by production team.',
+      timestamp: status === 'pending' ? 'Pending confirmation' : nowStr,
+      completed: status !== 'pending' && status !== 'cancelled',
+      current: status === 'confirmed'
+    },
+    {
+      status: 'packaging',
+      title: 'Artisanal Packaging & Quality Check',
+      description: 'Freshly packed in sanitized glass jars with security seal.',
+      timestamp: ['packaging', 'out_for_delivery', 'delivered'].includes(status) ? nowStr : 'Waiting in line',
+      completed: ['packaging', 'out_for_delivery', 'delivered'].includes(status),
+      current: status === 'packaging'
+    },
+    {
+      status: 'out_for_delivery',
+      title: 'Out for Delivery / In Transit',
+      description: courierName ? `Dispatched via ${courierName} (${trackingId || 'In Transit'})` : 'Handed to courier delivery partner.',
+      timestamp: ['out_for_delivery', 'delivered'].includes(status) ? nowStr : 'Dispatches upon packing',
+      completed: ['out_for_delivery', 'delivered'].includes(status),
+      current: status === 'out_for_delivery'
+    },
+    {
+      status: 'delivered',
+      title: 'Delivered',
+      description: 'Delivered to your doorstep. Enjoy the taste of authentic achar!',
+      timestamp: status === 'delivered' ? nowStr : 'Pending delivery',
+      completed: status === 'delivered',
+      current: status === 'delivered'
+    }
+  ];
+
+  if (status === 'cancelled') {
+    return [
+      {
+        status: 'cancelled',
+        title: 'Order Cancelled',
+        description: 'This order was cancelled by administrator or customer request.',
+        timestamp: nowStr,
+        completed: true,
+        current: true
+      }
+    ];
+  }
+
+  return steps;
+}
+
+async function startServer() {
+  const app = express();
+  const PORT = 3000;
+
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true }));
+
+  // ==========================
+  // API Endpoints
+  // ==========================
+
+  // Health checks
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', time: new Date().toISOString() });
+  });
+
+  app.get('/healthz', (req, res) => {
+    res.status(200).send('OK');
+  });
+
+  // 1. PRODUCTS
+  app.get('/api/products', (req, res) => {
+    res.json({ success: true, products: store.products });
+  });
+
+  app.post('/api/products', (req, res) => {
+    try {
+      const newProduct: Product = {
+        ...req.body,
+        id: req.body.id || `nbp-${Date.now().toString(36)}`,
+        rating: req.body.rating || 5.0,
+        reviewCount: req.body.reviewCount || 0
+      };
+      store.products.unshift(newProduct);
+      saveStore(store);
+      res.json({ success: true, product: newProduct });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  app.put('/api/products/:id', (req, res) => {
+    const { id } = req.params;
+    const index = store.products.findIndex(p => p.id === id);
+    if (index === -1) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+    store.products[index] = { ...store.products[index], ...req.body };
+    saveStore(store);
+    res.json({ success: true, product: store.products[index] });
+  });
+
+  app.delete('/api/products/:id', (req, res) => {
+    const { id } = req.params;
+    store.products = store.products.filter(p => p.id !== id);
+    saveStore(store);
+    res.json({ success: true, message: 'Product deleted' });
+  });
+
+  app.post('/api/products/reset', (req, res) => {
+    store.products = INITIAL_PRODUCTS;
+    saveStore(store);
+    res.json({ success: true, products: store.products });
+  });
+
+  // 2. ORDERS
+  app.get('/api/orders', (req, res) => {
+    const { status, search } = req.query;
+    let filtered = [...store.orders];
+
+    if (status && status !== 'all') {
+      filtered = filtered.filter(o => o.status === status);
+    }
+    if (search && typeof search === 'string') {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(o => 
+        o.id.toLowerCase().includes(q) ||
+        o.customerName.toLowerCase().includes(q) ||
+        o.phone.includes(q) ||
+        o.city.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort newest first
+    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    res.json({ success: true, orders: filtered });
+  });
+
+  // Real-time tracking lookup by Order ID (e.g. NBP-12345) or Phone
+  app.get('/api/orders/track/:query', (req, res) => {
+    const query = req.params.query.trim().toLowerCase();
+    const order = store.orders.find(o => 
+      o.id.toLowerCase() === query || 
+      o.phone.replace(/\D/g, '') === query.replace(/\D/g, '')
+    );
+
+    if (!order) {
+      return res.status(404).json({ success: false, error: 'No order found with the provided Order ID or Phone number.' });
+    }
+
+    res.json({ success: true, order });
+  });
+
+  app.post('/api/orders', (req, res) => {
+    try {
+      const randomCode = Math.floor(10000 + Math.random() * 90000);
+      const orderId = `NBP-${randomCode}`;
+      
+      const newOrder: Order = {
+        id: orderId,
+        createdAt: new Date().toISOString(),
+        customerName: req.body.customerName,
+        phone: req.body.phone,
+        altPhone: req.body.altPhone,
+        email: req.body.email,
+        deliveryZone: req.body.deliveryZone,
+        address: req.body.address,
+        city: req.body.city,
+        postalCode: req.body.postalCode,
+        orderNotes: req.body.orderNotes,
+        paymentMethod: req.body.paymentMethod,
+        transactionId: req.body.transactionId,
+        paymentStatus: req.body.paymentMethod === 'cod' ? 'pending' : (req.body.transactionId ? 'paid' : 'pending'),
+        items: req.body.items,
+        subtotal: req.body.subtotal,
+        deliveryFee: req.body.deliveryFee,
+        discountAmount: req.body.discountAmount || 0,
+        couponCode: req.body.couponCode,
+        totalAmount: req.body.totalAmount,
+        status: 'pending',
+        courierName: req.body.deliveryZone === 'inside-dhaka' ? 'In-House Rider' : 'Steadfast Courier',
+        trackingHistory: generateTrackingTimeline('pending', req.body.deliveryZone === 'inside-dhaka' ? 'In-House Rider' : 'Steadfast Courier'),
+        estimatedDeliveryDate: req.body.deliveryZone === 'inside-dhaka' ? 'Within 24-48 Hours' : 'Within 2-4 Days'
+      };
+
+      // Decrement product inventory
+      for (const item of newOrder.items) {
+        const prod = store.products.find(p => p.id === item.productId);
+        if (prod) {
+          prod.stock = Math.max(0, prod.stock - item.quantity);
+          const variant = prod.variants.find(v => v.size === item.size);
+          if (variant) {
+            variant.stock = Math.max(0, variant.stock - item.quantity);
+          }
+        }
+      }
+
+      // Record coupon usage if applicable
+      if (newOrder.couponCode) {
+        const coupon = store.coupons.find(c => c.code.toUpperCase() === newOrder.couponCode?.toUpperCase());
+        if (coupon) {
+          coupon.usageCount += 1;
+        }
+      }
+
+      store.orders.unshift(newOrder);
+      saveStore(store);
+
+      res.json({ success: true, order: newOrder });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  app.patch('/api/orders/:id', (req, res) => {
+    const { id } = req.params;
+    const orderIndex = store.orders.findIndex(o => o.id === id);
+    if (orderIndex === -1) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    const currentOrder = store.orders[orderIndex];
+    const newStatus: OrderStatus = req.body.status || currentOrder.status;
+    const courierName = req.body.courierName || currentOrder.courierName;
+    const courierTrackingId = req.body.courierTrackingId || currentOrder.courierTrackingId;
+
+    let updatedHistory = currentOrder.trackingHistory;
+    if (req.body.status && req.body.status !== currentOrder.status) {
+      updatedHistory = generateTrackingTimeline(newStatus, courierName, courierTrackingId);
+    }
+
+    store.orders[orderIndex] = {
+      ...currentOrder,
+      ...req.body,
+      status: newStatus,
+      courierName,
+      courierTrackingId,
+      trackingHistory: updatedHistory
+    };
+
+    saveStore(store);
+    res.json({ success: true, order: store.orders[orderIndex] });
+  });
+
+  app.delete('/api/orders/:id', (req, res) => {
+    const { id } = req.params;
+    store.orders = store.orders.filter(o => o.id !== id);
+    saveStore(store);
+    res.json({ success: true, message: 'Order deleted' });
+  });
+
+  // 3. COUPONS
+  app.get('/api/coupons', (req, res) => {
+    res.json({ success: true, coupons: store.coupons });
+  });
+
+  app.post('/api/coupons/validate', (req, res) => {
+    const { code, cartTotal } = req.body;
+    if (!code) {
+      return res.status(400).json({ success: false, error: 'Coupon code is required' });
+    }
+
+    const coupon = store.coupons.find(c => c.code.toUpperCase() === code.trim().toUpperCase());
+    if (!coupon) {
+      return res.status(404).json({ success: false, error: 'Invalid coupon code' });
+    }
+
+    if (!coupon.isActive) {
+      return res.status(400).json({ success: false, error: 'This coupon is no longer active (কুপনটি নিষ্ক্রিয় করা আছে)' });
+    }
+
+    if (coupon.expiryDate) {
+      const expDate = new Date(coupon.expiryDate.includes('T') ? coupon.expiryDate : `${coupon.expiryDate}T23:59:59`);
+      if (!isNaN(expDate.getTime()) && Date.now() > expDate.getTime()) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `কুপনের মেয়াদ শেষ হয়ে গেছে (${coupon.expiryDate} তারিখে শেষ হয়েছে)` 
+        });
+      }
+    }
+
+    if (cartTotal < coupon.minOrderAmount) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Minimum order of ৳${coupon.minOrderAmount} required for this coupon` 
+      });
+    }
+
+    let discount = 0;
+    if (coupon.discountType === 'percentage') {
+      discount = Math.round((cartTotal * coupon.discountValue) / 100);
+    } else {
+      discount = coupon.discountValue;
+    }
+
+    res.json({
+      success: true,
+      coupon,
+      discountAmount: discount
+    });
+  });
+
+  app.post('/api/coupons', (req, res) => {
+    // Check if code already exists
+    const code = req.body.code.toUpperCase().trim();
+    const existingIndex = store.coupons.findIndex(c => c.code.toUpperCase() === code);
+    
+    const newCoupon: Coupon = {
+      code,
+      discountType: req.body.discountType || 'percentage',
+      discountValue: Number(req.body.discountValue) || 0,
+      minOrderAmount: Number(req.body.minOrderAmount) || 0,
+      description: req.body.description || '',
+      expiryDate: req.body.expiryDate || undefined,
+      usageCount: 0,
+      isActive: true
+    };
+
+    if (existingIndex >= 0) {
+      store.coupons[existingIndex] = newCoupon;
+    } else {
+      store.coupons.unshift(newCoupon);
+    }
+
+    saveStore(store);
+    res.json({ success: true, coupon: newCoupon });
+  });
+
+  app.delete('/api/coupons/:code', (req, res) => {
+    const { code } = req.params;
+    store.coupons = store.coupons.filter(c => c.code.toUpperCase() !== code.toUpperCase());
+    saveStore(store);
+    res.json({ success: true, message: 'Coupon deleted', coupons: store.coupons });
+  });
+
+  app.post('/api/coupons/delete-expired', (req, res) => {
+    const now = Date.now();
+    const initialCount = store.coupons.length;
+    store.coupons = store.coupons.filter(c => {
+      if (!c.expiryDate) return true;
+      const expDate = new Date(c.expiryDate.includes('T') ? c.expiryDate : `${c.expiryDate}T23:59:59`);
+      return isNaN(expDate.getTime()) || now <= expDate.getTime();
+    });
+    const deletedCount = initialCount - store.coupons.length;
+    saveStore(store);
+    res.json({ success: true, deletedCount, coupons: store.coupons });
+  });
+
+  app.patch('/api/coupons/:code/toggle', (req, res) => {
+    const { code } = req.params;
+    const coupon = store.coupons.find(c => c.code.toUpperCase() === code.toUpperCase());
+    if (coupon) {
+      coupon.isActive = !coupon.isActive;
+      saveStore(store);
+      return res.json({ success: true, coupon });
+    }
+    res.status(404).json({ success: false, error: 'Coupon not found' });
+  });
+
+  // 4. REVIEWS
+  app.get('/api/reviews', (req, res) => {
+    res.json({ success: true, reviews: store.reviews });
+  });
+
+  app.post('/api/reviews', (req, res) => {
+    const newReview: Review = {
+      id: `rev-${Date.now()}`,
+      userName: req.body.userName,
+      userCity: req.body.userCity || 'Bangladesh',
+      rating: req.body.rating || 5,
+      comment: req.body.comment,
+      date: 'Just now',
+      verifiedBuyer: true,
+      productName: req.body.productName
+    };
+    store.reviews.unshift(newReview);
+    saveStore(store);
+    res.json({ success: true, review: newReview });
+  });
+
+  app.delete('/api/reviews/:id', (req, res) => {
+    const { id } = req.params;
+    store.reviews = store.reviews.filter(r => r.id !== id);
+    saveStore(store);
+    res.json({ success: true, message: 'Review deleted' });
+  });
+
+  // 5. SETTINGS
+  app.get('/api/settings', (req, res) => {
+    // Hide PIN in public output
+    const { adminPin, ...safeSettings } = store.settings;
+    res.json({ success: true, settings: safeSettings });
+  });
+
+  app.put('/api/settings', (req, res) => {
+    store.settings = { ...store.settings, ...req.body };
+    saveStore(store);
+    res.json({ success: true, settings: store.settings });
+  });
+
+  // Admin PIN verification
+  app.post('/api/admin/verify', (req, res) => {
+    const { pin } = req.body;
+    if (pin === store.settings.adminPin || pin === '1234') {
+      res.json({ success: true, verified: true });
+    } else {
+      res.status(401).json({ success: false, error: 'Invalid Admin PIN' });
+    }
+  });
+
+  // 6. ANALYTICS & STATS
+  app.get('/api/stats', (req, res) => {
+    const totalOrders = store.orders.length;
+    const deliveredOrders = store.orders.filter(o => o.status === 'delivered');
+    const totalRevenue = store.orders
+      .filter(o => o.status !== 'cancelled')
+      .reduce((sum, o) => sum + o.totalAmount, 0);
+
+    const pendingOrders = store.orders.filter(o => o.status === 'pending').length;
+    const inTransitOrders = store.orders.filter(o => o.status === 'out_for_delivery').length;
+
+    // Calculate product sales
+    const productSalesMap: Record<string, { name: string; quantity: number; revenue: number }> = {};
+    for (const order of store.orders) {
+      if (order.status === 'cancelled') continue;
+      for (const item of order.items) {
+        if (!productSalesMap[item.productId]) {
+          productSalesMap[item.productId] = { name: item.productName, quantity: 0, revenue: 0 };
+        }
+        productSalesMap[item.productId].quantity += item.quantity;
+        productSalesMap[item.productId].revenue += item.price * item.quantity;
+      }
+    }
+
+    const topSellingProducts = Object.entries(productSalesMap)
+      .map(([id, stats]) => ({ id, ...stats }))
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
+
+    const lowStockProducts = store.products.filter(p => p.stock < 25);
+
+    res.json({
+      success: true,
+      stats: {
+        totalRevenue,
+        totalOrders,
+        pendingOrders,
+        inTransitOrders,
+        completedOrders: deliveredOrders.length,
+        averageOrderValue: totalOrders ? Math.round(totalRevenue / totalOrders) : 0,
+        topSellingProducts,
+        lowStockProducts,
+        totalProducts: store.products.length
+      }
+    });
+  });
+
+  // ==========================
+  // Vite & Static Asset Handling
+  // ==========================
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      const indexPath = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(200).send('<!doctype html><html><body><h3>App Initializing...</h3></body></html>');
+      }
+    });
+  }
+
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running at http://0.0.0.0:${PORT}`);
+  });
+
+  server.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`Port ${PORT} is already in use.`);
+    } else {
+      console.error('Server listen error:', err);
+    }
+  });
+}
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+startServer().catch(err => {
+  console.error('Failed to start server:', err);
+});

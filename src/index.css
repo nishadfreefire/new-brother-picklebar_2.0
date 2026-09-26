@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+@theme {
+  /* Premium Color Palette: Dark Green & Luxury Gold */
+  --color-primary-50: #f0f7f4;
+  --color-primary-100: #d9ebe2;
+  --color-primary-200: #b3d7c5;
+  --color-primary-300: #88bfa3;
+  --color-primary-400: #5ba07f;
+  --color-primary-500: #3d8160;
+  --color-primary-600: #2d6549;
+  --color-primary-700: #0F392B;
+  --color-primary-800: #0a2a1f;
+  --color-primary-900: #061b14;
+  --color-primary-950: #030e0a;
+
+  --color-luxury-50: #fefbf3;
+  --color-luxury-100: #fef6e6;
+  --color-luxury-200: #fceabd;
+  --color-luxury-300: #fad980;
+  --color-luxury-400: #f8c84f;
+  --color-luxury-500: #D4AF37;
+  --color-luxury-600: #b8922a;
+  --color-luxury-700: #967623;
+  --color-luxury-800: #7a5e23;
+  --color-luxury-900: #654e22;
+  --color-luxury-950: #3a2b11;
+
+  /* Accent Colors */
+  --color-accent-cream: #FAF8F5;
+  --color-accent-pearl: #F5F3EF;
+  --color-accent-champagne: #EFE9E0;
+}
+
+@layer base {
+  body {
+    font-family: 'Google Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1C1917;
+    background-color: #FAF8F5;
+  }
+
+  /* Bengali text styling */
+  :lang(bn) {
+    font-family: 'Tiro Bangla', 'Google Sans', system-ui, sans-serif;
+  }
+
+  .font-display {
+    font-family: 'Google Sans', system-ui, sans-serif;
+  }
+
+  .font-editorial {
+    font-family: 'Tiro Bangla', Georgia, serif;
+  }
+
+  .font-heritage {
+    font-family: 'Tiro Bangla', serif;
+  }
+
+  /* Ensure Bengali characters use Tiro Bangla */
+  .font-bengali,
+  [lang="bn"],
+  .bangla-text {
+    font-family: 'Tiro Bangla', system-ui, sans-serif;
+  }
+
+  /* Alternative Bengali font for specific use */
+  .font-bengali-alt {
+    font-family: 'Noto Sans Bengali', 'Tiro Bangla', system-ui, sans-serif;
+  }
+}
+
+/* Artisanal paper texture & custom details */
+.bg-artisan-paper {
+  background-color: #FAF7F2;
+  background-image: radial-gradient(#d6c7b2 0.75px, transparent 0.75px);
+  background-size: 24px 24px;
+}
+
+.vintage-border {
+  border-image: repeating-linear-gradient(45deg, #c5a880, #c5a880 10px, transparent 10px, transparent 20px) 1;
+}
+
+/* Premium Gradient Backgrounds */
+.bg-luxury-gradient {
+  background: linear-gradient(135deg, var(--color-primary-700) 0%, var(--color-primary-900) 100%);
+}
+
+.bg-gold-gradient {
+  background: linear-gradient(135deg, var(--color-luxury-400) 0%, var(--color-luxury-600) 100%);
+}
+
+.bg-premium-shine {
+  background: linear-gradient(135deg, var(--color-primary-700) 0%, var(--color-primary-600) 50%, var(--color-primary-700) 100%);
+}
+
+/* Custom minimal scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
+
+/* Admin Panel Custom Styles */
+.font-bengali {
+  font-family: 'Noto Sans Bengali', 'Tiro Bangla', sans-serif;
+}
+
+@keyframes slide-in-from-bottom-5 {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-top-2 {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoom-in-95 {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-in {
+  animation: slide-in-from-bottom-5 0.3s ease-out;
+}
+
+.fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.zoom-in-95 {
+  animation: zoom-in-95 0.3s ease-out;
+}
+
+.slide-in-from-top-2 {
+  animation: slide-in-from-top-2 0.3s ease-out;
+}
+
+.scale-102:hover {
+  transform: scale(1.02);
+}
+
+.scale-98:active {
+  transform: scale(0.98);
+}
+
+.duration-300 {
+  animation-duration: 0.3s;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0F392B;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1a5a42;
+}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function() {
+        try {
+          var _nativeFetch = window.fetch ? window.fetch.bind(window) : null;
+          var _currentFetch = _nativeFetch;
+          Object.defineProperty(window, 'fetch', {
+            get: function() {
+              return _currentFetch || _nativeFetch;
+            },
+            set: function(fn) {
+              _currentFetch = fn;
+            },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          // ignore if already configurable or fails in locked environment
+        }
+      })();
+    </script>
+    <title>New Brothers Picklebar - Artisanal Homemade Achar & Pickles</title>
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/zGswr7Dq/logo.png" />
+    <meta name="description" content="Premium authentic homemade pickles and achar made with 100% pure cold-pressed mustard oil, traditional spices, real-time order tracking, fast checkout, and live database sync." />
+    <meta property="og:title" content="New Brothers Picklebar - Artisanal Homemade Achar & Pickles" />
+    <meta property="og:description" content="Premium authentic homemade pickles and achar made with 100% pure cold-pressed mustard oil, traditional spices, real-time order tracking, fast checkout, and live database sync." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+Bengali:wght@400;500;600;700;800&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-[#FAF7F2] text-[#2C241E] antialiased selection:bg-[#E07A24] selection:text-white font-sans overflow-x-hidden">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

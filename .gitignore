@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+bun.lockb
+
+# Build outputs
+dist/
+build/
+.cache/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temp files
+*.tmp
+.temp/
+
+# Admin backup files
+src/components/AdminDashboard-new-incomplete.tsx
+src/components/admin/
+
+# Data backups (optional - remove if you want to include store.json)
+# data/store.json
